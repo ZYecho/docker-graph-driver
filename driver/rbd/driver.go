@@ -4,8 +4,10 @@ package rbd
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/docker/docker/daemon/graphdriver"
+	"github.com/docker/docker/pkg/containerfs"
+	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/mount"
-	"github.com/hustcat/docker-graph-driver/driver"
 	"io/ioutil"
 	"os"
 	"path"
@@ -21,7 +23,7 @@ func init() {
 	graphdriver.Register("rbd", Init)
 }
 
-func Init(home string, options []string) (graphdriver.Driver, error) {
+func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (graphdriver.Driver, error) {
 	if err := os.MkdirAll(home, 0700); err != nil && !os.IsExist(err) {
 		log.Errorf("Rbd create home dir %s failed: %v", err)
 		return nil, err
@@ -40,7 +42,7 @@ func Init(home string, options []string) (graphdriver.Driver, error) {
 		RbdSet: rbdSet,
 		home:   home,
 	}
-	return d, nil
+	return graphdriver.NewNaiveDiffDriver(d, uidMaps, gidMaps), nil
 }
 
 func (d *RbdDriver) String() string {
@@ -74,7 +76,11 @@ func (d *RbdDriver) Cleanup() error {
 	return err
 }
 
-func (d *RbdDriver) Create(id, parent string) error {
+func (d *RbdDriver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts) error {
+	return d.Create(id, parent, opts)
+}
+
+func (d *RbdDriver) Create(id, parent string, opts *graphdriver.CreateOpts	) error {
 	if err := d.RbdSet.AddDevice(id, parent); err != nil {
 		return err
 	}
@@ -98,34 +104,34 @@ func (d *RbdDriver) Remove(id string) error {
 	return nil
 }
 
-func (d *RbdDriver) Get(id, mountLabel string) (string, error) {
+func (d *RbdDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error) {
 	mp := path.Join(d.home, "mnt", id)
 
 	if err := os.MkdirAll(mp, 0755); err != nil && !os.IsExist(err) {
-		return "", err
+		return nil, err
 	}
 
 	if err := d.RbdSet.MountDevice(id, mp, mountLabel); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	rootFs := path.Join(mp, "rootfs")
 	if err := os.MkdirAll(rootFs, 0755); err != nil && !os.IsExist(err) {
 		d.RbdSet.UnmountDevice(id)
-		return "", err
+		return nil, err
 	}
 
 	idFile := path.Join(mp, "id")
 	if _, err := os.Stat(idFile); err != nil && os.IsNotExist(err) {
-		// Create an "id" file with the container/image id in it to help reconscruct this in case
+		// Create an "id" file with the container/image id in it to help reconstruct this in case
 		// of later problems
 		if err := ioutil.WriteFile(idFile, []byte(id), 0600); err != nil {
 			d.RbdSet.UnmountDevice(id)
-			return "", err
+			return nil, err
 		}
 	}
 
-	return rootFs, nil
+	return containerfs.NewLocalContainerFS(rootFs), nil
 }
 
 func (d *RbdDriver) Put(id string) error {

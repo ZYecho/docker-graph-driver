@@ -1,4 +1,4 @@
-package graphtest
+package rbd
 
 import (
 	"io/ioutil"
@@ -7,11 +7,13 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/hustcat/docker-graph-driver/driver"
+	"github.com/docker/docker/daemon/graphdriver"
 )
 
 var (
 	drv *Driver
+	tmpOuter = path.Join(os.TempDir(), "rbd-tests")
+	tmp      = path.Join(tmpOuter, "rbd")
 )
 
 type Driver struct {
@@ -20,24 +22,25 @@ type Driver struct {
 	refCount int
 }
 
-func newDriver(t *testing.T, name string) *Driver {
-	root, err := ioutil.TempDir("/var/tmp", "docker-graphtest-")
+func testInit(dir string, t testing.TB) graphdriver.Driver {
+	d, err := Init(dir, nil, nil, nil)
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.MkdirAll(root, 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	d, err := graphdriver.GetDriver(name, root, nil)
-	if err != nil {
-		if err == graphdriver.ErrNotSupported || err == graphdriver.ErrPrerequisites {
-			t.Skip("Driver %s not supported", name)
+		if err == graphdriver.ErrNotSupported {
+			t.Skip(err)
+		} else {
+			t.Fatal(err)
 		}
+	}
+	return d
+}
+
+func newDriver(t testing.TB) *Driver {
+	if err := os.MkdirAll(tmp, 0755); err != nil {
 		t.Fatal(err)
 	}
-	return &Driver{d, root, 1}
+
+	d := testInit(tmp, t)
+	return d.(*Driver)
 }
 
 func cleanup(t *testing.T, d *Driver) {
@@ -45,15 +48,6 @@ func cleanup(t *testing.T, d *Driver) {
 		t.Fatal(err)
 	}
 	os.RemoveAll(d.root)
-}
-
-func GetDriver(t *testing.T, name string) graphdriver.Driver {
-	if drv == nil {
-		drv = newDriver(t, name)
-	} else {
-		drv.refCount++
-	}
-	return drv
 }
 
 func PutDriver(t *testing.T) {
@@ -105,11 +99,11 @@ func verifyFile(t *testing.T, path string, mode os.FileMode, uid, gid uint32) {
 }
 
 // Creates an new image and verifies it is empty and the right metadata
-func DriverTestCreateEmpty(t *testing.T, drivername string) {
-	driver := GetDriver(t, drivername)
+func DriverTestCreateEmpty(t *testing.T) {
+	driver := newDriver(t)
 	defer PutDriver(t)
 
-	if err := driver.Create("empty", ""); err != nil {
+	if err := driver.Create("empty", "", nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -122,10 +116,10 @@ func DriverTestCreateEmpty(t *testing.T, drivername string) {
 		t.Fatal(err)
 	}
 
-	verifyFile(t, dir, 0755|os.ModeDir, 0, 0)
+	verifyFile(t, dir.Path(), 0755|os.ModeDir, 0, 0)
 
 	// Verify that the directory is empty
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := ioutil.ReadDir(dir.Path())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +141,7 @@ func createBase(t *testing.T, driver graphdriver.Driver, name string) {
 	oldmask := syscall.Umask(0)
 	defer syscall.Umask(oldmask)
 
-	if err := driver.Create(name, ""); err != nil {
+	if err := driver.Create(name, "", nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -157,7 +151,7 @@ func createBase(t *testing.T, driver graphdriver.Driver, name string) {
 	}
 	defer driver.Put(name)
 
-	subdir := path.Join(dir, "a subdir")
+	subdir := path.Join(dir.Path(), "a subdir")
 	if err := os.Mkdir(subdir, 0705|os.ModeSticky); err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +159,7 @@ func createBase(t *testing.T, driver graphdriver.Driver, name string) {
 		t.Fatal(err)
 	}
 
-	file := path.Join(dir, "a file")
+	file := path.Join(dir.Path(), "a file")
 	if err := ioutil.WriteFile(file, []byte("Some data"), 0222|os.ModeSetuid); err != nil {
 		t.Fatal(err)
 	}
@@ -178,13 +172,13 @@ func verifyBase(t *testing.T, driver graphdriver.Driver, name string) {
 	}
 	defer driver.Put(name)
 
-	subdir := path.Join(dir, "a subdir")
+	subdir := path.Join(dir.Path(), "a subdir")
 	verifyFile(t, subdir, 0705|os.ModeDir|os.ModeSticky, 1, 2)
 
-	file := path.Join(dir, "a file")
+	file := path.Join(dir.Path(), "a file")
 	verifyFile(t, file, 0222|os.ModeSetuid, 0, 0)
 
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := ioutil.ReadDir(dir.Path())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,8 +189,8 @@ func verifyBase(t *testing.T, driver graphdriver.Driver, name string) {
 
 }
 
-func DriverTestCreateBase(t *testing.T, drivername string) {
-	driver := GetDriver(t, drivername)
+func DriverTestCreateBase(t *testing.T) {
+	driver := newDriver(t)
 	defer PutDriver(t)
 
 	createBase(t, driver, "Base")
@@ -207,13 +201,13 @@ func DriverTestCreateBase(t *testing.T, drivername string) {
 	}
 }
 
-func DriverTestCreateSnap(t *testing.T, drivername string) {
-	driver := GetDriver(t, drivername)
+func DriverTestCreateSnap(t *testing.T) {
+	driver := newDriver(t)
 	defer PutDriver(t)
 
 	createBase(t, driver, "Base")
 
-	if err := driver.Create("Snap", "Base"); err != nil {
+	if err := driver.Create("Snap", "Base", nil); err != nil {
 		t.Fatal(err)
 	}
 

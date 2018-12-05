@@ -7,10 +7,10 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/parsers"
-	"github.com/docker/docker/pkg/units"
+	"github.com/docker/go-units"
 	"github.com/noahdesu/go-ceph/rados"
 	"github.com/noahdesu/go-ceph/rbd"
-	"github.com/opencontainers/runc/libcontainer/label"
+	"github.com/opencontainers/selinux/go-selinux/label"
 	"os/exec"
 	"strings"
 	"sync"
@@ -203,7 +203,7 @@ func (devices *RbdSet) createFilesystem(info *DevInfo) error {
 		}
 		err = exec.Command("tune2fs", append([]string{"-c", "-1", "-i", "0"}, devname)...).Run()
 	default:
-		err = fmt.Errorf("Unsupported filesystem type %s", devices.filesystem)
+		err = fmt.Errorf("unsupported filesystem type %s", devices.filesystem)
 	}
 	if err != nil {
 		return err
@@ -569,7 +569,7 @@ func (devices *RbdSet) MountDevice(hash, mountPoint, mountLabel string) error {
 		err = syscall.Mount(info.Device, mountPoint, fstype, flags, options)
 	}
 	if err != nil {
-		return fmt.Errorf("Error mounting '%s' on '%s': %s", info.Device, mountPoint, err)
+		return fmt.Errorf("error mounting '%s' on '%s': %s", info.Device, mountPoint, err)
 	}
 
 	info.mountCount = 1
