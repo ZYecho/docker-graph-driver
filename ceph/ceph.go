@@ -21,7 +21,7 @@ type CephDriver struct {
 }
 
 func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (graphdriver.Driver, error) {
-	log.Debug("Init called, home = %s", home)
+	log.Debugf("Init called, home = %s", home)
 	if err := os.MkdirAll(home, 0700); err != nil && !os.IsExist(err) {
 		log.Errorf("Rbd create home dir %s failed: %v", err)
 		return nil, err

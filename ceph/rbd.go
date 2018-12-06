@@ -111,7 +111,7 @@ func (devices *RbdSet) initRbdSet(doInit bool) error {
 
 	// Setup the base image
 	if doInit {
-		log.Debugf("Rbd setup base image")
+		log.Debug("Rbd setup base image")
 		if err := devices.setupBaseImage(); err != nil {
 			log.Errorf("Rbd error device setupBaseImage: %s", err)
 			return err
@@ -416,7 +416,7 @@ func (devices *RbdSet) deleteImage(info *DevInfo) error {
 func (devices *RbdSet) imageIsMapped(devInfo *DevInfo) (bool, error) {
 	// Older ceph binaries are not printing the device on mapping so
 	// we have to discover it with showmapped.
-	out, err := exec.Command("ceph", "showmapped", "--format", "json").Output()
+	out, err := exec.Command("rbd", "showmapped", "--format", "json").Output()
 	if err != nil {
 		log.Errorf("Rbd run ceph showmapped failed: %v", err)
 		return false, err
@@ -453,7 +453,7 @@ func (devices *RbdSet) mapImageToRbdDevice(devInfo *DevInfo) error {
 	pool := devices.dataPoolName
 	imgName := devices.getRbdImageName(devInfo.Hash)
 
-	_, err := exec.Command("ceph", "--pool", pool, "map", imgName).Output()
+	_, err := exec.Command("rbd", "--pool", pool, "map", imgName).Output()
 	if err != nil {
 		return err
 	}
@@ -477,7 +477,7 @@ func (devices *RbdSet) unmapImageFromRbdDevice(devInfo *DevInfo) error {
 		return nil
 	}
 
-	if err := exec.Command("ceph", "unmap", devInfo.Device).Run(); err != nil {
+	if err := exec.Command("rbd", "unmap", devInfo.Device).Run(); err != nil {
 		return err
 	}
 
