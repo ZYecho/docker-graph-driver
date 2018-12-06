@@ -3,15 +3,16 @@
 package rbd
 
 import (
+	"io/ioutil"
+	"os"
+	"path"
+	"strconv"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/graphdriver"
 	"github.com/docker/docker/pkg/containerfs"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/mount"
-	"io/ioutil"
-	"os"
-	"path"
-	"strconv"
 )
 
 type RbdDriver struct {
@@ -80,7 +81,7 @@ func (d *RbdDriver) CreateReadWrite(id, parent string, opts *graphdriver.CreateO
 	return d.Create(id, parent, opts)
 }
 
-func (d *RbdDriver) Create(id, parent string, opts *graphdriver.CreateOpts	) error {
+func (d *RbdDriver) Create(id, parent string, opts *graphdriver.CreateOpts) error {
 	if err := d.RbdSet.AddDevice(id, parent); err != nil {
 		return err
 	}

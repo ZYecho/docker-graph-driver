@@ -5,16 +5,17 @@ package rbd
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
+	"strings"
+	"sync"
+	"syscall"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/go-units"
 	"github.com/noahdesu/go-ceph/rados"
 	"github.com/noahdesu/go-ceph/rbd"
 	"github.com/opencontainers/selinux/go-selinux/label"
-	"os/exec"
-	"strings"
-	"sync"
-	"syscall"
 )
 
 const (

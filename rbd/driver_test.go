@@ -11,16 +11,9 @@ import (
 )
 
 var (
-	drv *Driver
 	tmpOuter = path.Join(os.TempDir(), "rbd-tests")
 	tmp      = path.Join(tmpOuter, "rbd")
 )
-
-type Driver struct {
-	graphdriver.Driver
-	root     string
-	refCount int
-}
 
 func testInit(dir string, t testing.TB) graphdriver.Driver {
 	d, err := Init(dir, nil, nil, nil)
@@ -34,31 +27,27 @@ func testInit(dir string, t testing.TB) graphdriver.Driver {
 	return d
 }
 
-func newDriver(t testing.TB) *Driver {
+func newDriver(t testing.TB) graphdriver.Driver {
 	if err := os.MkdirAll(tmp, 0755); err != nil {
 		t.Fatal(err)
 	}
 
 	d := testInit(tmp, t)
-	return d.(*Driver)
+	return d
 }
 
-func cleanup(t *testing.T, d *Driver) {
-	if err := drv.Cleanup(); err != nil {
+func cleanup(t *testing.T, d graphdriver.Driver) {
+	if err := d.Cleanup(); err != nil {
 		t.Fatal(err)
 	}
-	os.RemoveAll(d.root)
+	os.RemoveAll(tmp)
 }
 
-func PutDriver(t *testing.T) {
-	if drv == nil {
+func PutDriver(t *testing.T, d graphdriver.Driver) {
+	if d == nil {
 		t.Skip("No driver to put!")
 	}
-	drv.refCount--
-	if drv.refCount == 0 {
-		cleanup(t, drv)
-		drv = nil
-	}
+	cleanup(t, d)
 }
 
 func verifyFile(t *testing.T, path string, mode os.FileMode, uid, gid uint32) {
@@ -154,7 +143,7 @@ func verifyBase(t *testing.T, driver graphdriver.Driver, name string) {
 // Creates an new image and verifies it is empty and the right metadata
 func TestCreateEmpty(t *testing.T) {
 	driver := newDriver(t)
-	defer PutDriver(t)
+	defer PutDriver(t, driver)
 
 	if err := driver.Create("empty", "", nil); err != nil {
 		t.Fatal(err)
@@ -191,7 +180,7 @@ func TestCreateEmpty(t *testing.T) {
 
 func TestCreateBase(t *testing.T) {
 	driver := newDriver(t)
-	defer PutDriver(t)
+	defer PutDriver(t, driver)
 
 	createBase(t, driver, "Base")
 	verifyBase(t, driver, "Base")
@@ -203,7 +192,7 @@ func TestCreateBase(t *testing.T) {
 
 func TestCreateSnap(t *testing.T) {
 	driver := newDriver(t)
-	defer PutDriver(t)
+	defer PutDriver(t, driver)
 
 	createBase(t, driver, "Base")
 
