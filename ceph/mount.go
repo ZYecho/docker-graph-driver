@@ -1,6 +1,6 @@
 // +build linux
 
-package rbd
+package ceph
 
 import (
 	"bytes"

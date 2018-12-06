@@ -1,4 +1,4 @@
-package rbd
+package ceph
 
 import (
 	"io/ioutil"
@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	tmpOuter = path.Join(os.TempDir(), "rbd-tests")
-	tmp      = path.Join(tmpOuter, "rbd")
+	tmpOuter = path.Join(os.TempDir(), "ceph-tests")
+	tmp      = path.Join(tmpOuter, "ceph")
 )
 
 func testInit(dir string, t testing.TB) graphdriver.Driver {

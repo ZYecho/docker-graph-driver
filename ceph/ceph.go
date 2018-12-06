@@ -1,6 +1,6 @@
 // +build linux
 
-package rbd
+package ceph
 
 import (
 	"io/ioutil"
@@ -15,13 +15,13 @@ import (
 	"github.com/docker/docker/pkg/mount"
 )
 
-type RbdDriver struct {
+type CephDriver struct {
 	home string
 	*RbdSet
 }
 
 func init() {
-	graphdriver.Register("rbd", Init)
+	graphdriver.Register("ceph", Init)
 }
 
 func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (graphdriver.Driver, error) {
@@ -39,25 +39,25 @@ func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (grap
 		return nil, err
 	}
 
-	d := &RbdDriver{
+	d := &CephDriver{
 		RbdSet: rbdSet,
 		home:   home,
 	}
 	return graphdriver.NewNaiveDiffDriver(d, uidMaps, gidMaps), nil
 }
 
-func (d *RbdDriver) String() string {
-	return "rbd"
+func (d *CephDriver) String() string {
+	return "ceph"
 }
 
-func (d *RbdDriver) Status() [][2]string {
+func (d *CephDriver) Status() [][2]string {
 	status := [][2]string{
 		{"Pool Objects", ""},
 	}
 	return status
 }
 
-func (d *RbdDriver) GetMetadata(id string) (map[string]string, error) {
+func (d *CephDriver) GetMetadata(id string) (map[string]string, error) {
 	info := d.RbdSet.Devices[id]
 
 	metadata := make(map[string]string)
@@ -67,7 +67,7 @@ func (d *RbdDriver) GetMetadata(id string) (map[string]string, error) {
 	return metadata, nil
 }
 
-func (d *RbdDriver) Cleanup() error {
+func (d *CephDriver) Cleanup() error {
 	err := d.RbdSet.Shutdown()
 
 	if err2 := mount.Unmount(d.home); err2 == nil {
@@ -77,18 +77,18 @@ func (d *RbdDriver) Cleanup() error {
 	return err
 }
 
-func (d *RbdDriver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts) error {
+func (d *CephDriver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts) error {
 	return d.Create(id, parent, opts)
 }
 
-func (d *RbdDriver) Create(id, parent string, opts *graphdriver.CreateOpts) error {
+func (d *CephDriver) Create(id, parent string, opts *graphdriver.CreateOpts) error {
 	if err := d.RbdSet.AddDevice(id, parent); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *RbdDriver) Remove(id string) error {
+func (d *CephDriver) Remove(id string) error {
 	if !d.RbdSet.HasDevice(id) {
 		return nil
 	}
@@ -105,7 +105,7 @@ func (d *RbdDriver) Remove(id string) error {
 	return nil
 }
 
-func (d *RbdDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error) {
+func (d *CephDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error) {
 	mp := path.Join(d.home, "mnt", id)
 
 	if err := os.MkdirAll(mp, 0755); err != nil && !os.IsExist(err) {
@@ -135,7 +135,7 @@ func (d *RbdDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error) 
 	return containerfs.NewLocalContainerFS(rootFs), nil
 }
 
-func (d *RbdDriver) Put(id string) error {
+func (d *CephDriver) Put(id string) error {
 	if err := d.RbdSet.UnmountDevice(id); err != nil {
 		log.Errorf("Warning: error unmounting device %s: %s", id, err)
 		return err
@@ -143,6 +143,6 @@ func (d *RbdDriver) Put(id string) error {
 	return nil
 }
 
-func (d *RbdDriver) Exists(id string) bool {
+func (d *CephDriver) Exists(id string) bool {
 	return d.RbdSet.HasDevice(id)
 }

@@ -1,6 +1,6 @@
 // +build linux
 
-package rbd
+package ceph
 
 import (
 	"encoding/json"
@@ -142,7 +142,7 @@ func (devices *RbdSet) setupBaseImage() error {
 
 	// base image is not exist, create it
 	baseName := devices.getRbdImageName("")
-	log.Debugf("Create base rbd image %s", baseName)
+	log.Debugf("Create base ceph image %s", baseName)
 
 	// create initial image
 	_, err = rbd.Create(devices.ioctx, baseName, devices.baseImageSize, rbd.RbdFeatureLayering)
@@ -273,7 +273,7 @@ func (devices *RbdSet) removeMetadata(info *DevInfo) error {
 	metaOid := devices.getRbdMetaOid(info.Hash)
 
 	if err := devices.ioctx.Delete(metaOid); err != nil {
-		return fmt.Errorf("rbd removing metadata %s failed: %s", info.Hash, err)
+		return fmt.Errorf("ceph removing metadata %s failed: %s", info.Hash, err)
 	}
 	return nil
 }
@@ -414,11 +414,11 @@ func (devices *RbdSet) deleteImage(info *DevInfo) error {
 }
 
 func (devices *RbdSet) imageIsMapped(devInfo *DevInfo) (bool, error) {
-	// Older rbd binaries are not printing the device on mapping so
+	// Older ceph binaries are not printing the device on mapping so
 	// we have to discover it with showmapped.
-	out, err := exec.Command("rbd", "showmapped", "--format", "json").Output()
+	out, err := exec.Command("ceph", "showmapped", "--format", "json").Output()
 	if err != nil {
-		log.Errorf("Rbd run rbd showmapped failed: %v", err)
+		log.Errorf("Rbd run ceph showmapped failed: %v", err)
 		return false, err
 	}
 
@@ -453,7 +453,7 @@ func (devices *RbdSet) mapImageToRbdDevice(devInfo *DevInfo) error {
 	pool := devices.dataPoolName
 	imgName := devices.getRbdImageName(devInfo.Hash)
 
-	_, err := exec.Command("rbd", "--pool", pool, "map", imgName).Output()
+	_, err := exec.Command("ceph", "--pool", pool, "map", imgName).Output()
 	if err != nil {
 		return err
 	}
@@ -477,7 +477,7 @@ func (devices *RbdSet) unmapImageFromRbdDevice(devInfo *DevInfo) error {
 		return nil
 	}
 
-	if err := exec.Command("rbd", "unmap", devInfo.Device).Run(); err != nil {
+	if err := exec.Command("ceph", "unmap", devInfo.Device).Run(); err != nil {
 		return err
 	}
 
@@ -495,7 +495,7 @@ func (devices *RbdSet) AddDevice(hash, baseHash string) error {
 	defer baseInfo.lock.Unlock()
 
 	if info, _ := devices.lookupDevice(hash); info != nil {
-		return fmt.Errorf("rbd device %s already exists", hash)
+		return fmt.Errorf("ceph device %s already exists", hash)
 	}
 
 	log.Debugf("[rbdset] Create image hash %s baseHash %s", hash, baseHash)
@@ -536,7 +536,7 @@ func (devices *RbdSet) MountDevice(hash, mountPoint, mountLabel string) error {
 
 	if info.mountCount > 0 {
 		if mountPoint != info.mountPath {
-			return fmt.Errorf("trying to mount rbd device in multple places (%s, %s)", info.mountPath, info.Device)
+			return fmt.Errorf("trying to mount ceph device in multple places (%s, %s)", info.mountPath, info.Device)
 		}
 
 		info.mountCount++
@@ -669,7 +669,7 @@ func NewRbdSet(root string, doInit bool, options []string) (*RbdSet, error) {
 	devices := &RbdSet{
 		MetaData:      MetaData{Devices: make(map[string]*DevInfo)},
 		conn:          conn,
-		dataPoolName:  "rbd",
+		dataPoolName:  "ceph",
 		imagePrefix:   "docker_image",
 		snapPrefix:    "docker_snap",
 		metaPrefix:    "docker_meta",
@@ -689,28 +689,28 @@ func NewRbdSet(root string, doInit bool, options []string) (*RbdSet, error) {
 		key = strings.ToLower(key)
 
 		switch key {
-		case "rbd.basesize":
+		case "ceph.basesize":
 			size, err := units.RAMInBytes(val)
 			if err != nil {
 				return nil, err
 			}
 			devices.baseImageSize = uint64(size)
-		case "rbd.datapool":
+		case "ceph.datapool":
 			devices.dataPoolName = val
-		case "rbd.imageprefix":
+		case "ceph.imageprefix":
 			devices.imagePrefix = val
-		case "rbd.client":
+		case "ceph.client":
 			devices.clientId = val
-		case "rbd.configfile":
+		case "ceph.configfile":
 			devices.configFile = val
-		case "rbd.fs":
+		case "ceph.fs":
 			if val != "ext4" && val != "xfs" {
 				return nil, fmt.Errorf("Unsupported filesystem %s\n", val)
 			}
 			devices.filesystem = val
-		case "rbd.mkfsarg":
+		case "ceph.mkfsarg":
 			devices.mkfsArgs = append(devices.mkfsArgs, val)
-		case "rbd.mountopt":
+		case "ceph.mountopt":
 			devices.mountOptions = joinMountOptions(devices.mountOptions, val)
 		default:
 			return nil, fmt.Errorf("Unknown option %s\n", key)
