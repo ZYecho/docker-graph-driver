@@ -669,7 +669,7 @@ func NewRbdSet(root string, doInit bool, options []string) (*RbdSet, error) {
 	devices := &RbdSet{
 		MetaData:      MetaData{Devices: make(map[string]*DevInfo)},
 		conn:          conn,
-		dataPoolName:  "ceph",
+		dataPoolName:  "rbd",
 		imagePrefix:   "docker_image",
 		snapPrefix:    "docker_snap",
 		metaPrefix:    "docker_meta",

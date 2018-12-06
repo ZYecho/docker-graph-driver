@@ -20,11 +20,8 @@ type CephDriver struct {
 	*RbdSet
 }
 
-func init() {
-	graphdriver.Register("ceph", Init)
-}
-
 func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (graphdriver.Driver, error) {
+	log.Debug("Init called")
 	if err := os.MkdirAll(home, 0700); err != nil && !os.IsExist(err) {
 		log.Errorf("Rbd create home dir %s failed: %v", err)
 		return nil, err
@@ -47,10 +44,12 @@ func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (grap
 }
 
 func (d *CephDriver) String() string {
+	log.Debug("String called")
 	return "ceph"
 }
 
 func (d *CephDriver) Status() [][2]string {
+	log.Debug("Status called")
 	status := [][2]string{
 		{"Pool Objects", ""},
 	}
@@ -58,6 +57,7 @@ func (d *CephDriver) Status() [][2]string {
 }
 
 func (d *CephDriver) GetMetadata(id string) (map[string]string, error) {
+	log.Debugf("GetMata called, id = %s", id)
 	info := d.RbdSet.Devices[id]
 
 	metadata := make(map[string]string)
@@ -68,6 +68,7 @@ func (d *CephDriver) GetMetadata(id string) (map[string]string, error) {
 }
 
 func (d *CephDriver) Cleanup() error {
+	log.Debug("cleanup called")
 	err := d.RbdSet.Shutdown()
 
 	if err2 := mount.Unmount(d.home); err2 == nil {
@@ -78,10 +79,12 @@ func (d *CephDriver) Cleanup() error {
 }
 
 func (d *CephDriver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts) error {
+	log.Debugf("CreateReadWrite called, id = %s", id)
 	return d.Create(id, parent, opts)
 }
 
 func (d *CephDriver) Create(id, parent string, opts *graphdriver.CreateOpts) error {
+	log.Debugf("Create called, id = %s", id)
 	if err := d.RbdSet.AddDevice(id, parent); err != nil {
 		return err
 	}
@@ -89,6 +92,7 @@ func (d *CephDriver) Create(id, parent string, opts *graphdriver.CreateOpts) err
 }
 
 func (d *CephDriver) Remove(id string) error {
+	log.Debugf("Remove called, id = %s", id)
 	if !d.RbdSet.HasDevice(id) {
 		return nil
 	}
@@ -106,6 +110,7 @@ func (d *CephDriver) Remove(id string) error {
 }
 
 func (d *CephDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error) {
+	log.Debugf("Get called, id = %s", id)
 	mp := path.Join(d.home, "mnt", id)
 
 	if err := os.MkdirAll(mp, 0755); err != nil && !os.IsExist(err) {
@@ -136,6 +141,7 @@ func (d *CephDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error)
 }
 
 func (d *CephDriver) Put(id string) error {
+	log.Debugf("Put called, id = %d", id)
 	if err := d.RbdSet.UnmountDevice(id); err != nil {
 		log.Errorf("Warning: error unmounting device %s: %s", id, err)
 		return err
@@ -144,5 +150,6 @@ func (d *CephDriver) Put(id string) error {
 }
 
 func (d *CephDriver) Exists(id string) bool {
+	log.Debugf("Exists called, id = %s", id)
 	return d.RbdSet.HasDevice(id)
 }
