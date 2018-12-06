@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/ZYecho/docker-graph-driver/driver/rbd"
+	"github.com/ZYecho/docker-graph-driver/rbd"
 	"github.com/docker/go-plugins-helpers/graphdriver/shim"
 )
 

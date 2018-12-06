@@ -272,7 +272,7 @@ func (devices *RbdSet) removeMetadata(info *DevInfo) error {
 	metaOid := devices.getRbdMetaOid(info.Hash)
 
 	if err := devices.ioctx.Delete(metaOid); err != nil {
-		return fmt.Errorf("Rbd removing metadata %s failed: %s", info.Hash, err)
+		return fmt.Errorf("rbd removing metadata %s failed: %s", info.Hash, err)
 	}
 	return nil
 }
@@ -307,7 +307,7 @@ func (devices *RbdSet) saveMetadata(info *DevInfo) error {
 
 	jsonData, err := json.Marshal(info)
 	if err != nil {
-		return fmt.Errorf("Error encoding metadata to json: %s", err)
+		return fmt.Errorf("error encoding metadata to json: %s", err)
 	}
 
 	if err = devices.ioctx.WriteFull(metaOid, jsonData); err != nil {
@@ -342,7 +342,7 @@ func (devices *RbdSet) createImage(hash, baseHash string) error {
 
 		// create snapshot
 		if snapshot, err = img.CreateSnapshot(snapName); err != nil {
-			log.Errorf("Rbd create snaphost %s failed: %v", snapName, err)
+			log.Errorf("Rbd create snapshot %s failed: %v", snapName, err)
 			img.Close()
 			return err
 		}
@@ -351,7 +351,7 @@ func (devices *RbdSet) createImage(hash, baseHash string) error {
 		snapshot = img.GetSnapshot(snapName)
 	}
 
-	// open snaphost success
+	// open snapshot success
 	defer img.Close()
 
 	// protect snapshot
@@ -461,7 +461,7 @@ func (devices *RbdSet) mapImageToRbdDevice(devInfo *DevInfo) error {
 	if v == true {
 		return nil
 	} else {
-		return fmt.Errorf("Unable map image %s", imgName)
+		return fmt.Errorf("unable map image %s", imgName)
 	}
 }
 
@@ -494,7 +494,7 @@ func (devices *RbdSet) AddDevice(hash, baseHash string) error {
 	defer baseInfo.lock.Unlock()
 
 	if info, _ := devices.lookupDevice(hash); info != nil {
-		return fmt.Errorf("Rbd device %s already exists", hash)
+		return fmt.Errorf("rbd device %s already exists", hash)
 	}
 
 	log.Debugf("[rbdset] Create image hash %s baseHash %s", hash, baseHash)
@@ -535,7 +535,7 @@ func (devices *RbdSet) MountDevice(hash, mountPoint, mountLabel string) error {
 
 	if info.mountCount > 0 {
 		if mountPoint != info.mountPath {
-			return fmt.Errorf("Trying to mount rbd device in multple places (%s, %s)", info.mountPath, info.Device)
+			return fmt.Errorf("trying to mount rbd device in multple places (%s, %s)", info.mountPath, info.Device)
 		}
 
 		info.mountCount++

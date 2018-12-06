@@ -98,44 +98,6 @@ func verifyFile(t *testing.T, path string, mode os.FileMode, uid, gid uint32) {
 
 }
 
-// Creates an new image and verifies it is empty and the right metadata
-func DriverTestCreateEmpty(t *testing.T) {
-	driver := newDriver(t)
-	defer PutDriver(t)
-
-	if err := driver.Create("empty", "", nil); err != nil {
-		t.Fatal(err)
-	}
-
-	if !driver.Exists("empty") {
-		t.Fatal("Newly created image doesn't exist")
-	}
-
-	dir, err := driver.Get("empty", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	verifyFile(t, dir.Path(), 0755|os.ModeDir, 0, 0)
-
-	// Verify that the directory is empty
-	fis, err := ioutil.ReadDir(dir.Path())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(fis) != 0 {
-		t.Fatal("New directory not empty")
-	}
-
-	driver.Put("empty")
-
-	if err := driver.Remove("empty"); err != nil {
-		t.Fatal(err)
-	}
-
-}
-
 func createBase(t *testing.T, driver graphdriver.Driver, name string) {
 	// We need to be able to set any perms
 	oldmask := syscall.Umask(0)
@@ -189,7 +151,45 @@ func verifyBase(t *testing.T, driver graphdriver.Driver, name string) {
 
 }
 
-func DriverTestCreateBase(t *testing.T) {
+// Creates an new image and verifies it is empty and the right metadata
+func TestCreateEmpty(t *testing.T) {
+	driver := newDriver(t)
+	defer PutDriver(t)
+
+	if err := driver.Create("empty", "", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	if !driver.Exists("empty") {
+		t.Fatal("Newly created image doesn't exist")
+	}
+
+	dir, err := driver.Get("empty", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	verifyFile(t, dir.Path(), 0755|os.ModeDir, 0, 0)
+
+	// Verify that the directory is empty
+	fis, err := ioutil.ReadDir(dir.Path())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(fis) != 0 {
+		t.Fatal("New directory not empty")
+	}
+
+	driver.Put("empty")
+
+	if err := driver.Remove("empty"); err != nil {
+		t.Fatal(err)
+	}
+
+}
+
+func TestCreateBase(t *testing.T) {
 	driver := newDriver(t)
 	defer PutDriver(t)
 
@@ -201,7 +201,7 @@ func DriverTestCreateBase(t *testing.T) {
 	}
 }
 
-func DriverTestCreateSnap(t *testing.T) {
+func TestCreateSnap(t *testing.T) {
 	driver := newDriver(t)
 	defer PutDriver(t)
 
