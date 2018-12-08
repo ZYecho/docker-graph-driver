@@ -13,10 +13,6 @@ Now docker community plan to implement out-of-process graph driver [#13777](http
 
 On the other hand, companies like EMC, NetApp and others will most likely not be sending pull requests to add their product specific graph driver to the Docker repository. That can be because of a multitude of reasons: they want to keep it closed source, they want to put some proprietary stuff in there, they'd want to be able to change it, update it separately from Docker releases and so on.
 
-# Support graph drivers
-
-- [Ceph rbd driver](https://github.com/ZYecho/docker-graph-driver/blob/master/driver/rbd/README.md)
-
 # How to use
 
 ## How to compile
@@ -28,17 +24,61 @@ go build -v
 ## Run docker graph driver
 
 ```bash
-# ./docker-graph-driver -D -s rbd
+# ./docker-graph-driver
 DEBU[0000] Rbd setup base image                         
-INFO[0000] listening on /run/docker/plugins/rbd.sock
+INFO[0000] listening on /run/docker/plugins/ceph.sock
    
-DEBU[0000] root group found. gid: 0
 ```
 
-## Integration with Docker
+## Run docker daemon
+
+```bash
+# dockerd --experimental -s ceph --log-level debug 
+```
+
+## Pull images
+
+```bash
+# docker pull centos:latest
+Pulling repository centos
+7322fbe74aa5: Download complete 
+f1b10cd84249: Download complete 
+c852f6d61e65: Download complete 
+Status: Downloaded newer image for centos:latest
+```
+
+## List rbd image
+
+```bash
+# rbd list
+docker_image_7322fbe74aa5632b33a400959867c8ac4290e9c5112877a7754be70cfe5d66e9
+docker_image_base_image
+docker_image_c852f6d61e65cddf1e8af1f6cd7db78543bfb83cdcd36845541cf6d9dfef20a0
+docker_image_f1b10cd842498c23d206ee0cbeaa9de8d2ae09ff3c7af2723a9e337a6965d639
+```
+## Run container
+
+```bash
+# docker run -it --rm centos:latest /bin/bash
+[root@290238155b54 /]#
+```
+
+```bash
+# rbd list
+docker_image_290238155b547852916b732e38bc4494375e1ed2837272e2940dfccc62691f6c
+docker_image_290238155b547852916b732e38bc4494375e1ed2837272e2940dfccc62691f6c-init
+docker_image_7322fbe74aa5632b33a400959867c8ac4290e9c5112877a7754be70cfe5d66e9
+docker_image_base_image
+docker_image_c852f6d61e65cddf1e8af1f6cd7db78543bfb83cdcd36845541cf6d9dfef20a0
+docker_image_f1b10cd842498c23d206ee0cbeaa9de8d2ae09ff3c7af2723a9e337a6965d639
+```
+
+# Integration with Docker Plugin System
 
 TODO:
 
 ## Others
 
-- [Run docker on ceph cluster with rbd driver](http://hustcat.github.io/run-docker-on-ceph/)
+- [Docker Graph Driver Plugin](https://docs.docker.com/engine/extend/plugins_graphdriver/#graph-driver-plugin-protocol)
+- [Docker Plugin Config](https://docs.docker.com/engine/extend/config/#config-field-descriptions)
+- [How to use Docker Plugin](https://docs.docker.com/engine/extend/#installing-and-using-a-plugin)

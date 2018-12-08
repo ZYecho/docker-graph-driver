@@ -11,10 +11,10 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/ceph/go-ceph/rados"
+	"github.com/ceph/go-ceph/rbd"
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/go-units"
-	"github.com/noahdesu/go-ceph/rados"
-	"github.com/noahdesu/go-ceph/rbd"
 	"github.com/opencontainers/selinux/go-selinux/label"
 )
 
@@ -536,17 +536,17 @@ func (devices *RbdSet) MountDevice(hash, mountPoint, mountLabel string) error {
 
 	if info.mountCount > 0 {
 		if mountPoint != info.mountPath {
-			return fmt.Errorf("trying to mount ceph device in multple places (%s, %s)", info.mountPath, info.Device)
+			return fmt.Errorf("trying to mount ceph device in multiple places (%s, %s)", info.mountPath, info.Device)
 		}
 
 		info.mountCount++
 		return nil
 	}
 
-	log.Debugf("[rbdset] Mount image %s with device %s to %s", info.Hash, info.Device, info.mountPath)
 	if err := devices.mapImageToRbdDevice(info); err != nil {
 		return err
 	}
+	log.Debugf("[rbdset] map image %s to device %s ", info.Hash, info.Device)
 
 	var flags uintptr = syscall.MS_MGC_VAL
 
@@ -576,6 +576,7 @@ func (devices *RbdSet) MountDevice(hash, mountPoint, mountLabel string) error {
 	info.mountCount = 1
 	info.mountPath = mountPoint
 
+    log.Debugf("mount image %s to %s", info.Hash, info.mountPath)
 	return nil
 }
 

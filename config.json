@@ -1,0 +1,16 @@
+{
+  "description": "Ceph Graphdriver Plugin",
+  "documentation": "CEPH",
+  "entrypoint": ["./docker-graph-driver"],
+  "interface": {
+    "types": ["docker.graphdriver/1.0"],
+    "socket": "ceph.sock"
+  },
+  "network": {
+    "type": "host"
+  },
+  "Linux": {
+    "capabilities": ["CAP_SYS_ADMIN"],
+    "allowAllDevices": true
+  }
+}
