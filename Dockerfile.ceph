@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y libcephfs-dev \
     && apt-get install -y librbd-dev \
     && apt-get install -y librados-dev \
-    && apt-get install -y ceph-common\
+    && apt-get install -y ceph-common \
     && wget  -q https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz \
     && tar -xvf go1.11.2.linux-amd64.tar.gz \
     && rm -f go1.11.2.linux-amd64.tar.gz \

@@ -362,7 +362,7 @@ func (devices *RbdSet) createImage(hash, baseHash string) error {
 	}
 
 	// clone image
-	_, err := img.Clone(snapName, devices.ioctx, imgName, rbd.RbdFeatureLayering)
+	_, err := img.Clone(snapName, devices.ioctx, imgName, rbd.RbdFeatureLayering, 0)
 	if err != nil {
 		log.Errorf("Rbd clone snapshot %s@%s to %s failed: %v", baseImgName, snapName, imgName, err)
 		return err
