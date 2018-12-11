@@ -128,6 +128,7 @@ func (d *CephDriver) Get(id, mountLabel string) (containerfs.ContainerFS, error)
 	if err := d.RbdSet.MountDevice(id, mp, mountLabel); err != nil {
 		return nil, err
 	}
+	log.Debugf("Get finished, id = %s", id)
 	return containerfs.NewLocalContainerFS(mp), nil
 }
 

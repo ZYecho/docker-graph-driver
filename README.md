@@ -74,8 +74,11 @@ docker_image_f1b10cd842498c23d206ee0cbeaa9de8d2ae09ff3c7af2723a9e337a6965d639
 ```
 
 # Integration with Docker Plugin System
-
-TODO:
+1. make sure that you have install a ceph cluster
+2. put the cluster certification file into dir ```ceph-key```
+3. ```sudo sh build_plugin.sh``` to create docker plugin, after that you could use ```docker plugin``` to see new plugin.
+4. use ```docker plugin enable pluginName``` to enable your plugin
+5. stop and start dockerd use ```dockerd --experimental -s pluginName &```
 
 ## Others
 

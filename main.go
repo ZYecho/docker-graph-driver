@@ -19,7 +19,7 @@ func main() {
 	}
 
 	h := shim.NewHandlerFromGraphDriver(ceph.Init)
-	//logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.DebugLevel)
 	logrus.Infof("listening on %s\n", socketAddress)
 	fmt.Println(h.ServeUnix(socketAddress, 0))
 }
