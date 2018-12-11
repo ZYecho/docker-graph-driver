@@ -13,7 +13,7 @@ RUN mkdir -p $GOPATH/src/golang.org/x \
     && git clone https://github.com/golang/net.git \
     && go get github.com/ZYecho/docker-graph-driver \
     && cd $GOPATH/src/github.com/ZYecho/docker-graph-driver \
-    && go build -v
+    && go build -v \
+    && cp docker-graph-driver /bin
 
 WORKDIR $GOPATH/src/github.com/ZYecho/docker-graph-driver
-ENTRYPOINT ["./docker-graph-driver"]

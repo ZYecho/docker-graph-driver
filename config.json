@@ -1,7 +1,7 @@
 {
   "description": "Ceph Graphdriver Plugin",
   "documentation": "CEPH",
-  "entrypoint": ["./docker-graph-driver"],
+  "entrypoint": ["/docker-graph-driver"],
   "interface": {
     "types": ["docker.graphdriver/1.0"],
     "socket": "ceph.sock"
