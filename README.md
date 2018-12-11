@@ -80,8 +80,14 @@ docker_image_f1b10cd842498c23d206ee0cbeaa9de8d2ae09ff3c7af2723a9e337a6965d639
 4. use ```docker plugin enable pluginName``` to enable your plugin
 5. stop and start dockerd use ```dockerd --experimental -s pluginName &```
 
+## Issue Now
+In the ceph storage driver impl, ```rdb map``` need more privilege, and the docker plugin system not support it, so now the plugin can't work,
+see [issue #33010](https://github.com/moby/moby/issues/33010) for details.
+
 ## Others
 
 - [Docker Graph Driver Plugin](https://docs.docker.com/engine/extend/plugins_graphdriver/#graph-driver-plugin-protocol)
 - [Docker Plugin Config](https://docs.docker.com/engine/extend/config/#config-field-descriptions)
 - [How to use Docker Plugin](https://docs.docker.com/engine/extend/#installing-and-using-a-plugin)
+- [Docker Seccomp Config](https://docs.docker.com/engine/security/seccomp/#significant-syscalls-blocked-by-the-default-profile)
+- [Docker Apparmor Config](https://docs.docker.com/engine/security/apparmor/)
